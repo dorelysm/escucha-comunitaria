@@ -1,0 +1,25 @@
+# Entorno y secretos
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+frontend/.vercel/
+
+# Archivos temporales
+*.log
+.DS_Store
+Thumbs.db
+
+# Directorio de archivos intermedios (no van al repo)
+frontend_src/
