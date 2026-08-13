@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import ReactMarkdown from "react-markdown"
 
 export default function ChatPage() {
   const [pregunta, setPregunta] = useState("")
@@ -124,13 +125,26 @@ export default function ChatPage() {
           <div style={{
             fontSize: 16,
             lineHeight: 1.7,
-            whiteSpace: "pre-wrap",
             borderLeft: "4px solid var(--dc-border)",
             paddingLeft: 20,
             color: "var(--dc-ink)",
           }}>
-            {respuesta}
-            {cargando && <span style={{ opacity: 0.4, animation: "pulse 1s infinite" }}>▌</span>}
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p style={{ margin: "0 0 12px" }}>{children}</p>,
+                strong: ({ children }) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
+                em: ({ children }) => <em>{children}</em>,
+                ul: ({ children }) => <ul style={{ paddingLeft: 20, margin: "0 0 12px" }}>{children}</ul>,
+                ol: ({ children }) => <ol style={{ paddingLeft: 20, margin: "0 0 12px" }}>{children}</ol>,
+                li: ({ children }) => <li style={{ marginBottom: 4 }}>{children}</li>,
+                code: ({ children }) => <code style={{ fontFamily: "monospace", fontSize: 14, background: "var(--dc-border)", padding: "1px 4px" }}>{children}</code>,
+                h2: ({ children }) => <h2 style={{ fontSize: 20, fontWeight: 700, margin: "16px 0 8px" }}>{children}</h2>,
+                h3: ({ children }) => <h3 style={{ fontSize: 17, fontWeight: 600, margin: "12px 0 6px" }}>{children}</h3>,
+              }}
+            >
+              {respuesta}
+            </ReactMarkdown>
+            {cargando && <span style={{ opacity: 0.4 }}>▌</span>}
           </div>
 
           {/* Fuentes consultadas */}
