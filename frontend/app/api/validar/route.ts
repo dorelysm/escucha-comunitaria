@@ -83,7 +83,7 @@ justificacion, una o dos oraciones sin afirmar nada que no esté en los fragment
 Devuelve JSON con marca, justificacion e ids_citas (los identificadores de los \
 fragmentos que sostienen la marca).`
 
-async function buscarUnidades(vector: number[], limite = 8): Promise<Cita[]> {
+async function buscarUnidades(vector: number[], limite = 50): Promise<Cita[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (getSupabaseAnon() as any).rpc("match_unidades", {
     query_embedding: vector,
