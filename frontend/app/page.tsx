@@ -1,12 +1,24 @@
 import Link from "next/link"
-import type { MetaStats } from "@/types/dominio"
+import { getSupabaseAnon } from "@/lib/supabase"
 
-async function getMeta(): Promise<MetaStats | null> {
+async function getMeta() {
   try {
-    const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
-    const res = await fetch(`${base}/api/meta`, { cache: "no-store" })
-    if (!res.ok) return null
-    return res.json()
+    const sb = getSupabaseAnon()
+    const [fuentes, unidades, porProcedencia] = await Promise.all([
+      sb.from("fuentes").select("*", { count: "exact", head: true }),
+      sb.from("unidades").select("*", { count: "exact", head: true }),
+      sb.from("fuentes").select("tipo_procedencia"),
+    ])
+    const por_procedencia: Record<string, number> = {}
+    for (const f of porProcedencia.data ?? []) {
+      const t = (f as { tipo_procedencia: string }).tipo_procedencia ?? "desconocido"
+      por_procedencia[t] = (por_procedencia[t] ?? 0) + 1
+    }
+    return {
+      total_fuentes: fuentes.count ?? 0,
+      total_unidades: unidades.count ?? 0,
+      por_procedencia,
+    }
   } catch {
     return null
   }
