@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escucha Comunitaria — CTW Cartagena 2026</title>
+<style>
+/* ── Tokens ─────────────────────────────────────────── */
+:root {
+  --ink:        #0D0D0D;
+  --paper:      #F8F7F3;
+  --accent:     #007B73;
+  --accent-dim: #00534E;
+  --rule:       #C9C5BD;
+  --muted:      #6B6760;
+  --subtle:     #E9E7E2;
+  --strong:     #1A1A1A;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink:        #EDECE8;
+    --paper:      #111110;
+    --accent:     #2ABFB5;
+    --accent-dim: #1D8C84;
+    --rule:       #2E2D2B;
+    --muted:      #8C8882;
+    --subtle:     #1E1D1B;
+    --strong:     #F0EFE9;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ink:        #EDECE8;
+  --paper:      #111110;
+  --accent:     #2ABFB5;
+  --accent-dim: #1D8C84;
+  --rule:       #2E2D2B;
+  --muted:      #8C8882;
+  --subtle:     #1E1D1B;
+  --strong:     #F0EFE9;
+}
+
+:root[data-theme="light"] {
+  --ink:        #0D0D0D;
+  --paper:      #F8F7F3;
+  --accent:     #007B73;
+  --accent-dim: #00534E;
+  --rule:       #C9C5BD;
+  --muted:      #6B6760;
+  --subtle:     #E9E7E2;
+  --strong:     #1A1A1A;
+}
+
+/* ── Reset ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ── Slide system ───────────────────────────────────── */
+.slide {
+  width: 100%;
+  min-height: 100vh;
+  padding: 56px 72px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-bottom: 1px solid var(--rule);
+  page-break-after: always;
+  break-after: page;
+}
+
+/* ── Typography ─────────────────────────────────────── */
+.display {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  line-height: 1.0;
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat-num {
+  font-family: Georgia, serif;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ── Slide header (shared) ──────────────────────────── */
+.slide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.slide-num {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.slide-label {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ─────────────────────────────────────────────────────
+   SLIDE 1 — PORTADA
+───────────────────────────────────────────────────── */
+.slide-portada {
+  justify-content: space-between;
+  background: var(--ink);
+  color: var(--paper);
+  --rule: rgba(255,255,255,0.12);
+  --muted: rgba(255,255,255,0.45);
+}
+
+.portada-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.portada-logo {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+}
+
+.portada-event {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.portada-hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.portada-headline {
+  font-size: clamp(52px, 8vw, 96px);
+  font-family: Georgia, serif;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: #fff;
+  max-width: 16ch;
+}
+
+.portada-headline em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.portada-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.portada-meta-label {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 6px;
+}
+
+.portada-meta-value {
+  font-size: 15px;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ─────────────────────────────────────────────────────
+   SLIDE 2 — PROBLEMA
+───────────────────────────────────────────────────── */
+.problema-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  flex: 1;
+}
+
+.problema-left {
+  padding-right: 48px;
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.problema-headline {
+  font-size: clamp(36px, 5vw, 60px);
+}
+
+.problema-right {
+  padding-left: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 32px;
+}
+
+.stat-block {
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.stat-block:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.stat-block .num {
+  font-size: 56px;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-block .desc {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────
+   SLIDE 3 — SOLUCIÓN
+───────────────────────────────────────────────────── */
+.solucion-intro {
+  font-size: clamp(22px, 3vw, 36px);
+  font-family: Georgia, serif;
+  font-weight: 400;
+  line-height: 1.3;
+  max-width: 52ch;
+  margin-bottom: 48px;
+  text-wrap: balance;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  flex: 1;
+}
+
+.tool-card {
+  background: var(--subtle);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tool-glyph {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.tool-name {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.tool-title {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tool-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────────────────────
+   SLIDE 4 — IA
+───────────────────────────────────────────────────── */
+.ia-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  flex: 1;
+  align-items: stretch;
+}
+
+.ia-step {
+  padding: 28px 24px;
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ia-step:last-child { border-right: none; }
+
+.ia-step-num {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+.ia-tool {
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.ia-step-title {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ia-step-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.ia-output {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ink);
+  background: var(--subtle);
+  padding: 8px 10px;
+  letter-spacing: 0.03em;
+}
+
+/* ─────────────────────────────────────────────────────
+   SLIDE 5 — CORPUS
+───────────────────────────────────────────────────── */
+.corpus-headline {
+  font-size: clamp(32px, 4.5vw, 54px);
+  margin-bottom: 40px;
+  max-width: 28ch;
+}
+
+.corpus-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  margin-bottom: 40px;
+}
+
+.corpus-stat {
+  background: var(--subtle);
+  padding: 28px 24px;
+}
+
+.corpus-stat .n {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.corpus-stat .label {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.fuentes-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.fuente-item {
+  padding: 20px 24px;
+  border-top: 3px solid var(--rule);
+}
+
+.fuente-glyph {
+  font-size: 20px;
+  margin-bottom: 6px;
+  color: var(--accent);
+}
+
+.fuente-label {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.fuente-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────
+   SLIDE 6 — /VALIDAR
+───────────────────────────────────────────────────── */
+.validar-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  flex: 1;
+  align-items: center;
+}
+
+.validar-left {}
+
+.validar-title {
+  font-size: clamp(32px, 4vw, 48px);
+  margin-bottom: 20px;
+}
+
+.validar-desc {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.marcas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.marca-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--subtle);
+}
+
+.marca-sym {
+  font-size: 20px;
+  font-weight: 700;
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.marca-text {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.marca-text strong {
+  color: var(--ink);
+}
+
+.validar-right {}
+
+.mockup-box {
+  background: var(--subtle);
+  padding: 28px;
+  border-left: 3px solid var(--accent);
+}
+
+.mockup-label {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.dim-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.dim-row:last-child { border-bottom: none; }
+
+.dim-banda {
+  width: 4px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
+.dim-content {}
+
+.dim-name {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.dim-val {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.dim-mark {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* ─────────────────────────────────────────────────────
+   SLIDE 7 — /EXPLORAR
+───────────────────────────────────────────────────── */
+.explorar-intro {
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-family: Georgia, serif;
+  max-width: 36ch;
+  margin-bottom: 40px;
+  line-height: 1.2;
+}
+
+.cluster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+}
+
+.cluster-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto auto;
+  gap: 20px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.cluster-row:first-child { border-top: 1px solid var(--rule); }
+
+.cluster-n {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--rule);
+  font-weight: 600;
+}
+
+.cluster-label {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.cluster-frags {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cluster-chips {
+  display: flex;
+  gap: 4px;
+}
+
+.chip {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--rule);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chip-accent {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────
+   SLIDE 8 — IMPACTO Y CIERRE
+───────────────────────────────────────────────────── */
+.cierre-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  flex: 1;
+  align-items: start;
+}
+
+.impacto-title {
+  font-size: clamp(32px, 4vw, 52px);
+  margin-bottom: 24px;
+}
+
+.impacto-items {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.impacto-item {
+  padding-left: 20px;
+  border-left: 3px solid var(--accent);
+}
+
+.impacto-item-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.impacto-item-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.cierre-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.stack-title {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stack-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+}
+
+.stack-item .role {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.url-block {
+  margin-top: 32px;
+  padding: 20px 24px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.url-label {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+
+.url-value {
+  font-family: ui-monospace, monospace;
+  font-size: 16px;
+  color: var(--accent);
+}
+
+/* ── Nav (screen only) ──────────────────────────────── */
+.nav {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+}
+
+.nav button {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 8px 16px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.nav button:hover { opacity: 1; }
+
+/* ── Print ──────────────────────────────────────────── */
+@media print {
+  html, body { background: white; }
+  .nav { display: none; }
+  .slide {
+    min-height: unset;
+    height: 100vh;
+    border-bottom: none;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <button onclick="scrollBy(0,-window.innerHeight)">↑</button>
+  <button onclick="scrollBy(0,window.innerHeight)">↓</button>
+</nav>
+
+<!-- ══ SLIDE 1 — PORTADA ════════════════════════════ -->
+<section class="slide slide-portada">
+  <div class="portada-top">
+    <span class="portada-logo">Escucha Comunitaria</span>
+    <span class="portada-event">CTW Cartagena 2026 · Hackathon</span>
+  </div>
+
+  <div class="portada-hero">
+    <h1 class="portada-headline display">
+      Lo que la comunidad<br><em>ya dijo</em>
+    </h1>
+  </div>
+
+  <div class="portada-bottom">
+    <div>
+      <div class="portada-meta-label">Problema</div>
+      <div class="portada-meta-value">Voces ciudadanas archivadas que no llegan al diseño de política pública</div>
+    </div>
+    <div>
+      <div class="portada-meta-label">Solución</div>
+      <div class="portada-meta-value">Corpus indexado con IA — contrasta cualquier propuesta contra evidencia real</div>
+    </div>
+    <div>
+      <div class="portada-meta-label">Territorio</div>
+      <div class="portada-meta-value">Cartagena de Indias &amp; Puerto Colombia · 2023–2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 2 — PROBLEMA ═══════════════════════════ -->
+<section class="slide">
+  <div class="slide-header">
+    <span class="eyebrow slide-label">El problema</span>
+    <span class="slide-num">02 / 08</span>
+  </div>
+
+  <div class="problema-grid">
+    <div class="problema-left">
+      <h2 class="display problema-headline">
+        Las voces existen.<br>Nadie las consulta.
+      </h2>
+      <p style="margin-top:24px; font-size:16px; color:var(--muted); line-height:1.7; max-width:38ch;">
+        Mesas sectoriales, encuestas de percepción, testimonios de campo — decenas de documentos que describen con precisión qué necesita la comunidad cartagenera. Ninguno se cruza sistemáticamente con las propuestas de intervención que llegan al escritorio del formulador.
+      </p>
+    </div>
+
+    <div class="problema-right">
+      <div class="stat-block">
+        <div class="stat-num num" style="font-size:56px; color:var(--accent);">23%</div>
+        <div class="desc">Desempleo juvenil en Cartagena · DANE abr–jun 2026</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num num" style="font-size:56px; color:var(--accent);">22+</div>
+        <div class="desc">Actas de mesas sectoriales en Puerto Colombia que nadie ha cruzado con una propuesta de programa</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num num" style="font-size:56px; color:var(--accent);">0</div>
+        <div class="desc">Herramientas existentes que permitan a un formulador contrastar su propuesta contra estas fuentes en tiempo real</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 3 — SOLUCIÓN ═══════════════════════════ -->
+<section class="slide">
+  <div class="slide-header">
+    <span class="eyebrow slide-label">La solución</span>
+    <span class="slide-num">03 / 08</span>
+  </div>
+
+  <p class="solucion-intro">
+    Un corpus vivo de voces ciudadanas, indexado semánticamente, consultable de tres formas.
+  </p>
+
+  <div class="tools-grid">
+    <div class="tool-card">
+      <div class="tool-glyph">⇄</div>
+      <div class="tool-name">/validar</div>
+      <div class="tool-title">Contrastar propuesta</div>
+      <div class="tool-desc">
+        Pega cualquier propuesta de programa social. El sistema la descompone en 4 dimensiones —población, intervención, duración, resultado— y contrasta cada una contra el corpus con citas literales y una marca: respaldada, tensionada o sin datos.
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-glyph">◈</div>
+      <div class="tool-name">/explorar</div>
+      <div class="tool-title">Explorar temas</div>
+      <div class="tool-desc">
+        79 temas emergentes identificados por BERTopic sobre el corpus completo. Ordenados por volumen de evidencia, con distribución por tipo de fuente (actas, testimonios, encuesta) y fragmentos representativos.
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-glyph">◻</div>
+      <div class="tool-name">/chat</div>
+      <div class="tool-title">Conversación RAG</div>
+      <div class="tool-desc">
+        Consulta en lenguaje natural con el corpus. El modelo recupera los 50 fragmentos más relevantes, responde con streaming en markdown y cita cada fuente inline. Filtro por municipio: Cartagena o Puerto Colombia.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 4 — IA ══════════════════════════════════ -->
+<section class="slide">
+  <div class="slide-header">
+    <span class="eyebrow slide-label">Dónde aporta la IA</span>
+    <span class="slide-num">04 / 08</span>
+  </div>
+
+  <div class="ia-grid">
+    <div class="ia-step">
+      <div class="ia-step-num">PASO 01</div>
+      <div class="ia-tool">Whisper</div>
+      <div class="ia-step-title">Transcripción de audio de campo</div>
+      <div class="ia-step-desc">7 testimonios comunitarios grabados en campo se transcriben automáticamente con OpenAI Whisper, reduciendo horas de trabajo manual a segundos.</div>
+      <div class="ia-output">audio.mp3 → texto.txt</div>
+    </div>
+
+    <div class="ia-step">
+      <div class="ia-step-num">PASO 02</div>
+      <div class="ia-tool">Gemma 4 12B · Claude Haiku</div>
+      <div class="ia-step-title">Segmentación y normalización</div>
+      <div class="ia-step-desc">Cada documento se segmenta en unidades temáticas mínimas y se normaliza. LLM local (Gemma) con fallback a API (Haiku) para mantener soberanía de datos donde es posible.</div>
+      <div class="ia-output">documento → 1000+ fragmentos</div>
+    </div>
+
+    <div class="ia-step">
+      <div class="ia-step-num">PASO 03</div>
+      <div class="ia-tool">Voyage voyage-4</div>
+      <div class="ia-step-title">Embeddings semánticos</div>
+      <div class="ia-step-desc">Cada fragmento se convierte en un vector de 1024 dimensiones optimizado para recuperación semántica. Almacenados en Supabase pgvector con búsqueda por similitud coseno.</div>
+      <div class="ia-output">texto → vector 1024-dim</div>
+    </div>
+
+    <div class="ia-step">
+      <div class="ia-step-num">PASO 04</div>
+      <div class="ia-tool">BERTopic · UMAP · HDBSCAN</div>
+      <div class="ia-step-title">Clustering temático</div>
+      <div class="ia-step-desc">Los vectores se reducen con UMAP y se agrupan con HDBSCAN. BERTopic identifica representaciones semánticas por cluster. El LLM etiqueta cada grupo en lenguaje natural.</div>
+      <div class="ia-output">1000+ fragmentos → 79 temas</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 5 — CORPUS ═════════════════════════════ -->
+<section class="slide">
+  <div class="slide-header">
+    <span class="eyebrow slide-label">El corpus</span>
+    <span class="slide-num">05 / 08</span>
+  </div>
+
+  <h2 class="display corpus-headline">
+    Voces reales.<br>Sin intermediarios.
+  </h2>
+
+  <div class="corpus-stats">
+    <div class="corpus-stat">
+      <div class="stat-num n" style="color:var(--accent);">1 000+</div>
+      <div class="label">fragmentos indexados</div>
+    </div>
+    <div class="corpus-stat">
+      <div class="stat-num n" style="color:var(--accent);">30+</div>
+      <div class="label">fuentes en corpus</div>
+    </div>
+    <div class="corpus-stat">
+      <div class="stat-num n" style="color:var(--accent);">79</div>
+      <div class="label">temas emergentes</div>
+    </div>
+    <div class="corpus-stat">
+      <div class="stat-num n" style="color:var(--accent);">2</div>
+      <div class="label">municipios · 2023–2026</div>
+    </div>
+  </div>
+
+  <div class="fuentes-row">
+    <div class="fuente-item">
+      <div class="fuente-glyph">□</div>
+      <div class="fuente-label">Documentos públicos</div>
+      <div class="fuente-desc">22 actas de mesas sectoriales — Puerto Colombia. Participación ciudadana institucionalizada.</div>
+    </div>
+    <div class="fuente-item">
+      <div class="fuente-glyph">■</div>
+      <div class="fuente-label">Testimonios directos</div>
+      <div class="fuente-desc">7 testimonios transcritos con Whisper. Consentimiento informado registrado en la capa de datos.</div>
+    </div>
+    <div class="fuente-item">
+      <div class="fuente-glyph">⋯</div>
+      <div class="fuente-label">Encuesta ciudadana</div>
+      <div class="fuente-desc">1 150 respuestas de la Encuesta de Percepción Ciudadana Cartagena 2026. Voz estadística.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 6 — /VALIDAR ═══════════════════════════ -->
+<section class="slide">
+  <div class="slide-header">
+    <span class="eyebrow slide-label">Demo · /validar</span>
+    <span class="slide-num">06 / 08</span>
+  </div>
+
+  <div class="validar-grid">
+    <div class="validar-left">
+      <h2 class="display validar-title">Contrasta antes de diseñar</h2>
+      <p class="validar-desc">
+        El formulador pega su propuesta. El sistema la descompone automáticamente en 4 dimensiones y contrasta cada una contra el corpus en tiempo real — streaming, sin esperas, con citas literales de la fuente original.
+      </p>
+      <div class="marcas">
+        <div class="marca-row">
+          <span class="marca-sym" style="color:#2D7A4A;">✓</span>
+          <span class="marca-text"><strong>Respaldada</strong> — El corpus contiene fragmentos que coinciden con esta dimensión de la propuesta.</span>
+        </div>
+        <div class="marca-row">
+          <span class="marca-sym" style="color:#A06020;">⇄</span>
+          <span class="marca-text"><strong>Tensionada</strong> — Hay voces comunitarias que apuntan en dirección distinta a lo propuesto.</span>
+        </div>
+        <div class="marca-row">
+          <span class="marca-sym" style="color:var(--muted);">◻</span>
+          <span class="marca-text"><strong>Sin datos</strong> — El corpus no contiene voces sobre esta dimensión. Vacío, no error.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="validar-right">
+      <div class="mockup-box">
+        <div class="mockup-label">Ejemplo — Propuesta de empleo juvenil en economía creativa</div>
+        <div class="dim-row">
+          <div class="dim-banda" style="background:#3B82F6;"></div>
+          <div class="dim-content">
+            <div class="dim-name">Población objetivo</div>
+            <div class="dim-val">Jóvenes 18–28, economía creativa</div>
+            <div class="dim-mark" style="color:#2D7A4A;">✓ Respaldada</div>
+          </div>
+        </div>
+        <div class="dim-row">
+          <div class="dim-banda" style="background:#F59E0B;"></div>
+          <div class="dim-content">
+            <div class="dim-name">Tipo de intervención</div>
+            <div class="dim-val">Formación en habilidades digitales</div>
+            <div class="dim-mark" style="color:#A06020;">⇄ Tensionada</div>
+          </div>
+        </div>
+        <div class="dim-row">
+          <div class="dim-banda" style="background:var(--muted);"></div>
+          <div class="dim-content">
+            <div class="dim-name">Duración / horizonte</div>
+            <div class="dim-val">6 meses, fase piloto</div>
+            <div class="dim-mark" style="color:var(--muted);">◻ Sin datos</div>
+          </div>
+        </div>
+        <div class="dim-row">
+          <div class="dim-banda" style="background:#10B981;"></div>
+          <div class="dim-content">
+            <div class="dim-name">Resultado esperado</div>
+            <div class="dim-val">Inserción laboral formal</div>
+            <div class="dim-mark" style="color:#2D7A4A;">✓ Respaldada</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 7 — /EXPLORAR ══════════════════════════ -->
+<section class="slide">
+  <div class="slide-header">
+    <span class="eyebrow slide-label">Demo · /explorar</span>
+    <span class="slide-num">07 / 08</span>
+  </div>
+
+  <p class="explorar-intro">
+    79 temas emergentes — lo que la comunidad repite sin que nadie se lo haya preguntado directamente.
+  </p>
+
+  <div class="cluster-list">
+    <div class="cluster-row">
+      <span class="cluster-n">01</span>
+      <span class="cluster-label">Demandas urbanas integradas de desarrollo económico y seguridad</span>
+      <span class="cluster-frags">47 fragmentos</span>
+      <div class="cluster-chips">
+        <span class="chip chip-accent">□ 47 públicas</span>
+      </div>
+    </div>
+    <div class="cluster-row">
+      <span class="cluster-n">02</span>
+      <span class="cluster-label">Desarrollo integral de comunidades pesqueras y costeras</span>
+      <span class="cluster-frags">39 fragmentos</span>
+      <div class="cluster-chips">
+        <span class="chip chip-accent">□ 39 públicas</span>
+      </div>
+    </div>
+    <div class="cluster-row">
+      <span class="cluster-n">03</span>
+      <span class="cluster-label">Acceso a empleo, emprendimiento e ingresos económicos</span>
+      <span class="cluster-frags">34 fragmentos</span>
+      <div class="cluster-chips">
+        <span class="chip chip-accent">□ 34 públicas</span>
+      </div>
+    </div>
+    <div class="cluster-row">
+      <span class="cluster-n">04</span>
+      <span class="cluster-label">Inseguridad ciudadana y violencia en espacios públicos</span>
+      <span class="cluster-frags">28 fragmentos</span>
+      <div class="cluster-chips">
+        <span class="chip chip-accent">⋯ 28 encuesta</span>
+      </div>
+    </div>
+    <div class="cluster-row">
+      <span class="cluster-n">05</span>
+      <span class="cluster-label">Demandas ciudadanas por condiciones de vida digna</span>
+      <span class="cluster-frags">26 fragmentos</span>
+      <div class="cluster-chips">
+        <span class="chip chip-accent">⋯ 26 encuesta</span>
+      </div>
+    </div>
+    <div class="cluster-row" style="border-bottom:none; opacity:0.4;">
+      <span class="cluster-n">···</span>
+      <span class="cluster-label" style="font-style:italic; font-weight:400;">74 temas adicionales en la plataforma</span>
+      <span class="cluster-frags"></span>
+      <div class="cluster-chips"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SLIDE 8 — IMPACTO Y CIERRE ══════════════════ -->
+<section class="slide">
+  <div class="slide-header">
+    <span class="eyebrow slide-label">Impacto y próximos pasos</span>
+    <span class="slide-num">08 / 08</span>
+  </div>
+
+  <div class="cierre-grid">
+    <div>
+      <h2 class="display impacto-title">Lo que cambia cuando escuchas primero</h2>
+      <div class="impacto-items">
+        <div class="impacto-item">
+          <div class="impacto-item-title">Para el formulador de política</div>
+          <div class="impacto-item-desc">Contrasta cualquier propuesta contra evidencia real en segundos, con citas literales. El diseño informado reemplaza la suposición.</div>
+        </div>
+        <div class="impacto-item">
+          <div class="impacto-item-title">Para la comunidad</div>
+          <div class="impacto-item-desc">Lo que ya dijeron en mesas, encuestas y testimonios tiene peso demostrativo ante quien diseña los programas.</div>
+        </div>
+        <div class="impacto-item">
+          <div class="impacto-item-title">Próximos pasos</div>
+          <div class="impacto-item-desc">Ampliar corpus (nuevos municipios), ingesta continua, panel de gestión de consentimiento, API pública para ONG y academia.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cierre-right">
+      <div>
+        <div class="stack-title">Stack tecnológico</div>
+        <div class="stack-list">
+          <div class="stack-item"><span>Supabase + pgvector</span><span class="role">Base de datos vectorial</span></div>
+          <div class="stack-item"><span>Voyage voyage-4</span><span class="role">Embeddings 1024-dim</span></div>
+          <div class="stack-item"><span>BERTopic + UMAP + HDBSCAN</span><span class="role">Clustering temático</span></div>
+          <div class="stack-item"><span>Whisper</span><span class="role">Transcripción audio</span></div>
+          <div class="stack-item"><span>Gemma 4 12B / Claude Haiku</span><span class="role">Etiquetado y evaluación</span></div>
+          <div class="stack-item"><span>Next.js 15 + Vercel</span><span class="role">Frontend + deploy</span></div>
+        </div>
+      </div>
+
+      <div class="url-block">
+        <div class="url-label">Demo en vivo</div>
+        <div class="url-value">escucha-comunitaria.vercel.app</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

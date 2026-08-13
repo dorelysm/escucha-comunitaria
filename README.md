@@ -1,145 +1,127 @@
-# Código · Herramienta de escucha comunitaria
+# Escucha Comunitaria
 
-Aplicación web y pipelines que toman voces de la comunidad (testimonios, informes de consulta, memorias de mesas técnicas) y las hacen consultables para quienes formulan política pública. Dos modos de uso: **validar** una propuesta de programa (qué respaldo encuentra, dimensión por dimensión) y **explorar** los ejes temáticos que emergen del propio corpus.
+Herramienta de validación de propuestas de política pública contra un corpus de voces ciudadanas de Cartagena y Puerto Colombia. Construida para el hackathon CTW Cartagena 2026.
 
-CTW Hackathon Cartagena 2026 · Track: AI for Social Impact
-Equipo: Alex (investigación social, pitch) · Dorelys (arquitectura y desarrollo)
+---
 
-Desplegada en Vercel: **https://escucha-comunitaria.vercel.app/**
+## El problema
 
-## Video explicativo de la propuesta
+Las voces comunitarias quedan archivadas en PDFs que nadie consulta. Los programas sociales se diseñan sin escucha sistemática. Cartagena registra 23% de desempleo juvenil (DANE, abr–jun 2026) mientras las mesas sectoriales producen actas que nunca se cruzan con las propuestas de intervención.
 
-**[Ver video de explicación →](https://escucha-comunitaria.vercel.app/)**
+## La solución
 
-## Repositorios del proyecto
+Un corpus vivo de fragmentos ciudadanos — actas de mesas sectoriales, testimonios transcritos y encuesta de percepción — indexado semánticamente y consultable de tres formas:
 
-Cada uno es un repositorio independiente en GitHub.
+- **`/validar`** — Pega una propuesta de programa. El sistema la descompone en 4 dimensiones (población, intervención, duración, resultado) y contrasta cada una contra el corpus, devolviendo una marca (respaldada / tensionada / sin datos) con citas literales.
+- **`/explorar`** — Navega los 79 temas emergentes identificados por BERTopic, ordenados por volumen de evidencia, con distribución por tipo de fuente.
+- **`/chat`** — Conversación en lenguaje natural con el corpus, con streaming y citas inline.
 
-| Repositorio | Qué contiene |
-|---|---|
-| `codigo` | Este repo: frontend, pipeline, migraciones |
-| [`datos`](https://github.com/dorelysm/escucha-comunitaria-datos) | Corpus: `bruto/`, `textos/`, `consentimiento/` y la herramienta de preparación |
-| [`documentacion`](https://github.com/dorelysm/escucha-comunitaria-documentacion) | Requerimientos, contratos, diseño, infraestructura, pitch |
-
-## Estructura
-
-| Carpeta | Qué es |
-|---|---|
-| `frontend/` | Aplicación Next.js 16 (App Router) + React 19 + Tailwind CSS 4. Las cuatro pantallas (P1 entrada, P2 validación, P3 exploración, P4 corpus) y las rutas `/api/*`. |
-| `pipeline/` | Scripts Python de ingesta y análisis: `ingestar.py`, `analizar.py`, `llm.py`, `prompts.py`. |
-| `migraciones/` | Migraciones SQL aplicadas a Supabase. Solo la `004` (tabla `unidades`) vive acá; las `001`–`003` viven en `documentacion/infraestructura/migraciones`. |
-| `frontend_src/` | Copia duplicada de `lib/` y `types/` del frontend (restos del andamio). No se usa por el build; ignorarla. |
-
-### Frontend
-
-- Páginas: `app/page.tsx` (P1), `app/validar/page.tsx` (P2), `app/explorar/page.tsx` (P3), `app/corpus/page.tsx` (P4).
-- API (contratos_v2 §3): `GET /api/meta`, `POST /api/validar` (respuesta en streaming NDJSON), `GET /api/explorar`, `GET /api/corpus`.
-- Tipos compartidos en `types/dominio.ts` (contratos_v2 §2); regla de fuerza de evidencia y marcas en `lib/fuerza.ts` (contratos_v2 §5); cliente Supabase en `lib/supabase.ts` (anon key, respeta RLS).
-
-### Pipeline (Python)
-
-- `ingestar.py` — segmenta, normaliza, embebe e inserta en Supabase. Modos: archivo, carpeta, JSONL. Idempotente. Regla no negociable: `--consentimiento` solo cuando hay consentimiento grabado verificado; nunca se infiere.
-- `analizar.py` — clustering BERTopic (UMAP + HDBSCAN + stopwords en español + semilla fija) sobre los embeddings ya ingestados; escribe en `clusters` y actualiza `unidades.cluster_id`. Precomputado, no corre en vivo.
-- `llm.py` — cliente LLM unificado: primero el LLM local (Gemma vía LM Studio/Cloudflare, OpenAI-compatible), con fallback a Anthropic (Claude Haiku). El pipeline no distingue el backend.
-- `prompts.py` — los prompts versionados como constantes (contratos_v2 §6). Son código: si cambian, cambia el corpus.
+---
 
 ## Arquitectura
 
 ```
-Frontend Next.js (Vercel)
-  └─ /api/*  →  Supabase (Postgres + pgvector)   ←  lee resultados y citas
+datos/
+  textos/          ← actas PDF, transcripciones, encuesta JSONL
+  preparar_corpus.py
+  preparar_encuesta.py
 
-Pipeline Python (por lotes)
-  texto → segmentar → normalizar → embeber (voyage-4, 1024D) → insertar
-  embeddings → BERTopic (UMAP + HDBSCAN) → etiquetado LLM → clusters
+codigo/
+  pipeline/
+    ingestar.py    ← segmenta, normaliza, embebe (Voyage voyage-4) → Supabase
+    analizar.py    ← BERTopic clustering → etiqueta con LLM
+    llm.py         ← Gemma 4 12B local con fallback a Claude Haiku
+    prompts.py     ← todos los prompts del sistema
+
+  frontend/        ← Next.js App Router
+    app/
+      page.tsx          ← home con contadores dinámicos
+      validar/page.tsx  ← validación streaming NDJSON
+      explorar/page.tsx ← clusters acordeón
+      chat/page.tsx     ← RAG conversacional
+      corpus/page.tsx   ← inventario de fuentes
+
+  migraciones/     ← SQL: pgvector, RLS por consentimiento, match_unidades
 ```
 
-- **Almacenamiento:** Supabase, proyecto `escucha-comunitaria` (`wnqwuamyqjllkbkjmssy`).
-- **Embeddings:** `voyage-4`, `DIM = 1024` (recomendación de trabajo; verificación empírica pendiente, requerimientos_v3 §5.3).
-- **Clustering:** BERTopic (`umap-learn` + `hdbscan`), stopwords en español y semilla fija.
-- **LLM:** local `google/gemma-4-12b-qat` con fallback `claude-haiku-4-5`.
-- **Consentimiento:** los testimonios solo se exponen con `consentimiento = true`; la regla se aplica en la base (RLS), no a criterio de quien opera.
+**Stack:** Supabase (pgvector) · Voyage voyage-4 (embeddings 1024-dim) · BERTopic + UMAP + HDBSCAN · Gemma 4 12B / Claude Haiku · Next.js 15 · Anthropic SDK streaming · Vercel
 
-## Puesta en marcha
+---
+
+## Protocolo de consentimiento
+
+`consentimiento` nunca se infiere ni se completa automáticamente. Los testimonios se ingresan con `consentimiento = false` por defecto y quedan excluidos de toda exposición pública hasta confirmación humana explícita. La regla se aplica en la capa de datos (RLS de Supabase), no a criterio del operador.
+
+Para menores: se requiere consentimiento del acudiente además del asentimiento del menor. Sin acudiente presente o disponible, no se recoge el testimonio.
+
+---
+
+## Instalación
+
+### Variables de entorno
+
+**`codigo/pipeline/.env`**
+```
+SUPABASE_URL=https://<ref>.supabase.co
+SUPABASE_SERVICE_KEY=<service_role_key>
+VOYAGE_API_KEY=<voyage_key>
+ANTHROPIC_API_KEY=<anthropic_key>
+```
+
+**`codigo/frontend/.env.local`**
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<anon_key>
+ANTHROPIC_API_KEY=<anthropic_key>
+VOYAGE_API_KEY=<voyage_key>
+```
+
+### Pipeline Python
+
+```bash
+cd codigo/pipeline
+pip install -r requirements.txt
+
+# Ingestar corpus (testimonios con consentimiento confirmado)
+python ingestar.py --carpeta ../../datos/textos/testimonios --consentimiento
+
+# Ingestar actas públicas
+python ingestar.py --carpeta ../../datos/textos
+
+# Ingestar encuesta
+python ingestar.py --jsonl ../../datos/textos/encuesta_cartagena_percepcion_2026.jsonl --consentimiento
+
+# Clustering temático
+python analizar.py
+
+# Re-etiquetar clusters si es necesario
+python re_etiquetar.py
+```
 
 ### Frontend
 
-Requisitos: Node 20+.
-
 ```bash
-cd frontend
+cd codigo/frontend
 npm install
+npm run dev        # desarrollo en localhost:3000
+npx vercel --prod  # deploy a producción
 ```
 
-Crear `frontend/.env.local` (plantilla en `frontend/.env.example`):
+### Migraciones Supabase
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://wnqwuamyqjllkbkjmssy.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key del proyecto>
-ANTHROPIC_API_KEY=<...>          # usado por /api/validar
-ANTHROPIC_FALLBACK_MODEL=claude-haiku-4-5
-VOYAGE_API_KEY=<...>             # usado por /api/validar (embedding de la propuesta)
+Aplicar en orden desde `codigo/migraciones/`:
+```
+001_schema_inicial.sql
+002_pgvector.sql
+003_match_unidades.sql
+004_clusters.sql
+005_rls.sql
+006_hablantes_rls_lectura_publica.sql
+007_fuentes_municipio.sql
 ```
 
-```bash
-npm run dev     # → http://localhost:3000
-```
+---
 
-### Pipeline
+## Demo
 
-Requisitos: Python 3.14.
-
-```bash
-cd pipeline
-pip install -r requirements.txt
-```
-
-Copiar `pipeline/.env.example` a `pipeline/.env` y completar: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VOYAGE_API_KEY`, `ANTHROPIC_API_KEY`, `LLM_LOCAL_ENDPOINT`, `LLM_LOCAL_MODEL`, `EMBEDDING_MODEL`, `EMBEDDING_DIM`.
-
-```bash
-# Ingesta de un corpus (carpeta con .txt + .meta.txt)
-python ingestar.py --entrada ../datos/textos --tipo publica --corpus institucional
-
-# Ingesta de la encuesta (JSONL, cada registro ya es una unidad)
-python ingestar.py --entrada ../datos/textos/encuesta_cartagena_percepcion_2026.jsonl \
-                   --tipo publica --corpus comunitario
-
-# Ingesta de un testimonio con consentimiento grabado
-python ingestar.py --entrada testimonio_cartagena_001_20260813.txt \
-                   --tipo testimonio --corpus comunitario --consentimiento
-
-# Clustering sobre lo ingestado (precomputado, no corre en vivo)
-python analizar.py
-```
-
-### Migraciones
-
-Aplicar en orden contra el proyecto Supabase: `001`–`003` en `documentacion/infraestructura/migraciones` y `004` en `migraciones/` (crea `unidades` con `embedding vector(1024)` y la política RLS de consentimiento).
-
-## Estado vs. alcance del evento
-
-Prioridades de las 8 horas (requerimientos_v3 §10):
-
-| Alcance | Estado |
-|---|---|
-| Núcleo 1 · Ingesta con normalización y verificación de integridad | Implementado (`ingestar.py`) |
-| Núcleo 2 · Modo validación por dimensiones con citas y procedencia | Implementado (P2 + `/api/validar`) |
-| Núcleo 3 · Sitio desplegado con P1 + P2 | Implementado (P1 con contadores + P2) |
-| Alto valor 4 · Modo exploración con clusters precomputados | Implementado (P3 + `/api/explorar` + `analizar.py`) |
-| Alto valor 5 · Filtro por territorio en P2 y P3 | Implementado |
-| Alto valor 6 · Pantalla de corpus (P4) | Implementado (`/api/corpus`) |
-| Alto valor 7 · Ingesta en vivo durante el evento | Script soporta el modo; falta la operación del día |
-| Opcional 8 · Detección de vacíos comunitario vs. institucional | Pendiente |
-| Opcional 9 · Mapa de clusters | Pendiente |
-
-**Pendientes bloqueantes** (no son código): verificación empírica de embeddings y de la normalización semántica con habla costeña real (requerimientos_v3 §5.3) y configuración de la VPN/Tailscale para el LLM local.
-
-## Documentación relacionada
-
-Vive en el repositorio `documentacion`:
-
-- `requerimientos/requerimientos_v3.md` — problema, propuesta, arquitectura, esquema de datos, alcance del evento.
-- `requerimientos/contratos_v2.md` — tipos compartidos, rutas de API, contrato del pipeline, prompts.
-- `requerimientos/decision_embeddings_y_bertopic.md` — decisión de embeddings (`voyage-4`) y adopción de BERTopic.
-- `brief_diseno_claude_design.md` — sistema visual de procedencia y fuerza de evidencia, las cuatro pantallas.
-- `infraestructura/README.md` — estado de Supabase y migraciones aplicadas.
+[escucha-comunitaria.vercel.app](https://escucha-comunitaria.vercel.app)
