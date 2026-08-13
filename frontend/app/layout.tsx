@@ -26,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/validar" style={{ fontSize: 15, color: "var(--dc-muted)", textDecoration: "none" }}>Validar propuesta</Link>
             <Link href="/explorar" style={{ fontSize: 15, color: "var(--dc-muted)", textDecoration: "none" }}>Explorar temas</Link>
             <Link href="/corpus" style={{ fontSize: 15, color: "var(--dc-muted)", textDecoration: "none" }}>Ver corpus</Link>
+            <Link href="/chat" style={{ fontSize: 15, color: "var(--dc-muted)", textDecoration: "none" }}>Consultar</Link>
           </nav>
         </header>
         <main className="flex-1">{children}</main>
