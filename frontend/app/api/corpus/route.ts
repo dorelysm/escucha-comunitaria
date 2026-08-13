@@ -9,8 +9,7 @@ export async function GET(req: NextRequest) {
 
   let q = getSupabaseAnon()
     .from("fuentes")
-    .select(`id, tipo_procedencia, corpus, titulo, referencia, fecha_recoleccion,
-             hablantes(municipio, rango_etario, sexo, localidad, ocupacion, nivel_educativo, estrato)`)
+    .select(`id, tipo_procedencia, corpus, titulo, referencia, fecha_recoleccion, consentimiento`)
     .order("id", { ascending: false })
     .limit(200)
 
