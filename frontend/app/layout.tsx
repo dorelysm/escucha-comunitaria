@@ -18,11 +18,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" className={`${libreFranklin.variable} h-full`}>
       <body className="min-h-full flex flex-col" style={{ background: "var(--dc-bg)", color: "var(--dc-ink)", fontFamily: "'Libre Franklin', sans-serif" }}>
-        <header style={{ borderBottom: "1px solid var(--dc-border)", padding: "12px 32px", display: "flex", alignItems: "center", gap: "32px" }}>
+        <header style={{ borderBottom: "1px solid var(--dc-border)", padding: "12px 32px", display: "flex", alignItems: "center", gap: "32px", flexWrap: "wrap" }}>
           <Link href="/" style={{ fontWeight: 700, fontSize: 15, color: "var(--dc-ink)", textDecoration: "none" }}>
             Escucha Comunitaria
           </Link>
-          <nav style={{ display: "flex", gap: 24 }}>
+          <nav style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
             <Link href="/validar" style={{ fontSize: 15, color: "var(--dc-muted)", textDecoration: "none" }}>Validar propuesta</Link>
             <Link href="/explorar" style={{ fontSize: 15, color: "var(--dc-muted)", textDecoration: "none" }}>Explorar temas</Link>
             <Link href="/corpus" style={{ fontSize: 15, color: "var(--dc-muted)", textDecoration: "none" }}>Ver corpus</Link>
