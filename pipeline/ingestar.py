@@ -263,6 +263,11 @@ def _procesar_jsonl(
             for k in ["municipio", "rango_etario", "sexo", "localidad", "ocupacion", "nivel_educativo", "estrato"]
             if registro.get(k) is not None
         }
+        if "estrato" in metadatos_hablante:
+            try:
+                metadatos_hablante["estrato"] = int(float(metadatos_hablante["estrato"]))
+            except (ValueError, TypeError):
+                del metadatos_hablante["estrato"]
         # Mapear campos de la encuesta al esquema de hablantes
         if "localidad" in metadatos_hablante:
             metadatos_hablante["municipio"] = metadatos_hablante.get("municipio") or "cartagena"

@@ -15,6 +15,7 @@ frontend/.next/
 frontend/out/
 frontend/node_modules/
 frontend/.vercel/
+frontend/next-env.d.ts
 
 # Archivos temporales
 *.log

@@ -65,16 +65,15 @@ cd frontend
 npm install
 ```
 
-Crear `frontend/.env.local`:
+Crear `frontend/.env.local` (plantilla en `frontend/.env.example`):
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://wnqwuamyqjllkbkjmssy.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key o publishable key del proyecto>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key del proyecto>
 ANTHROPIC_API_KEY=<...>          # usado por /api/validar
 ANTHROPIC_FALLBACK_MODEL=claude-haiku-4-5
+VOYAGE_API_KEY=<...>             # usado por /api/validar (embedding de la propuesta)
 ```
-
-> Nota: `lib/supabase.ts` lee `NEXT_PUBLIC_SUPABASE_ANON_KEY`. `datos/.env.example` todavía lista el nombre deprecado `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; usar el nombre que lee el código.
 
 ```bash
 npm run dev     # → http://localhost:3000
@@ -82,9 +81,14 @@ npm run dev     # → http://localhost:3000
 
 ### Pipeline
 
-Requisitos: Python 3.14 (las dependencias ya están instaladas en `datos/.venv`). Dependencias: `voyageai`, `supabase`, `anthropic`, `openai`, `python-dotenv`, `numpy`, `bertopic`, `umap-learn`, `hdbscan`, `scikit-learn`.
+Requisitos: Python 3.14.
 
-Copiar `datos/.env.example` a `pipeline/.env` y completar: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VOYAGE_API_KEY`, `ANTHROPIC_API_KEY`, `LLM_LOCAL_ENDPOINT`, `LLM_LOCAL_MODEL`, `EMBEDDING_MODEL`, `EMBEDDING_DIM`.
+```bash
+cd pipeline
+pip install -r requirements.txt
+```
+
+Copiar `pipeline/.env.example` a `pipeline/.env` y completar: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VOYAGE_API_KEY`, `ANTHROPIC_API_KEY`, `LLM_LOCAL_ENDPOINT`, `LLM_LOCAL_MODEL`, `EMBEDDING_MODEL`, `EMBEDDING_DIM`.
 
 ```bash
 # Ingesta de un corpus (carpeta con .txt + .meta.txt)

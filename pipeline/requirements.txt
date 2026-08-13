@@ -1,0 +1,12 @@
+# Pipeline de ingesta y análisis — Python 3.14
+# Instalar: pip install -r requirements.txt
+voyageai
+supabase
+anthropic
+openai
+python-dotenv
+numpy
+bertopic==0.17.4
+umap-learn
+hdbscan
+scikit-learn
