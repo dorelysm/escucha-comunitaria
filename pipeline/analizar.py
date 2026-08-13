@@ -73,8 +73,15 @@ def _leer_unidades() -> tuple[list[str], list[list[float]], list[str]]:
 def _etiquetar_cluster(unidades_texto: list[str]) -> dict:
     muestra = "\n---\n".join(unidades_texto[:20])
     respuesta = completar(ETIQUETADO_CLUSTER, muestra)
+    # Strip markdown code fences the LLM sometimes wraps around JSON
+    texto = respuesta.strip()
+    if texto.startswith("```"):
+        texto = texto.split("```", 2)[1]
+        if texto.startswith("json"):
+            texto = texto[4:]
+        texto = texto.rsplit("```", 1)[0].strip()
     try:
-        return json.loads(respuesta)
+        return json.loads(texto)
     except json.JSONDecodeError:
         return {"etiqueta": "Sin etiqueta", "descripcion": respuesta.strip()}
 
