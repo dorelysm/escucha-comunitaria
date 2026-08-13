@@ -5,6 +5,8 @@ Aplicación web y pipelines que toman voces de la comunidad (testimonios, inform
 CTW Hackathon Cartagena 2026 · Track: AI for Social Impact
 Equipo: Alex (investigación social, pitch) · Dorelys (arquitectura y desarrollo)
 
+Desplegada en Vercel: **https://escucha-comunitaria.vercel.app/**
+
 ## Repositorios del proyecto
 
 Cada uno es un repositorio independiente en GitHub.
