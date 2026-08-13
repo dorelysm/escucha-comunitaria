@@ -125,3 +125,5 @@ Aplicar en orden desde `codigo/migraciones/`:
 ## Demo
 
 [escucha-comunitaria.vercel.app](https://escucha-comunitaria.vercel.app)
+
+[▶ Video de demostración](https://drive.google.com/file/d/18Chl4t0H6XvUARmoKxrQnJ215lknmlzs/view?usp=drive_link)
