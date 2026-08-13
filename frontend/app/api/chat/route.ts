@@ -19,11 +19,12 @@ No uses conocimiento externo. No inventes fuentes. No interpretes más allá de 
 
 type Fragmento = { id: string; texto_literal: string; fuente_id: string; referencia: string }
 
-async function buscarFragmentos(vector: number[]): Promise<Fragmento[]> {
+async function buscarFragmentos(vector: number[], municipio?: string): Promise<Fragmento[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (getSupabaseAnon() as any).rpc("match_unidades", {
     query_embedding: vector,
     match_count: 50,
+    p_municipio: municipio ?? null,
   })
   if (error || !data) return []
   return data as Fragmento[]
@@ -32,6 +33,7 @@ async function buscarFragmentos(vector: number[]): Promise<Fragmento[]> {
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const pregunta: string = (body.pregunta ?? "").trim()
+  const municipio: string | undefined = body.municipio || undefined
 
   if (!pregunta) {
     return new Response("Pregunta vacía", { status: 400 })
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
         const vector = embResult.data?.[0]?.embedding as number[]
 
         // 2. Recuperar fragmentos del corpus
-        const fragmentos = await buscarFragmentos(vector)
+        const fragmentos = await buscarFragmentos(vector, municipio)
 
         // 3. Construir prompt con fragmentos
         let userPrompt: string

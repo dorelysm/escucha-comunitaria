@@ -83,11 +83,12 @@ justificacion, una o dos oraciones sin afirmar nada que no esté en los fragment
 Devuelve JSON con marca, justificacion e ids_citas (los identificadores de los \
 fragmentos que sostienen la marca).`
 
-async function buscarUnidades(vector: number[], limite = 50): Promise<Cita[]> {
+async function buscarUnidades(vector: number[], limite = 50, municipio?: string): Promise<Cita[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (getSupabaseAnon() as any).rpc("match_unidades", {
     query_embedding: vector,
     match_count: limite,
+    p_municipio: municipio ?? null,
   })
 
   if (error || !data) return []
@@ -109,6 +110,7 @@ async function buscarUnidades(vector: number[], limite = 50): Promise<Cita[]> {
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const propuesta: string = body.propuesta ?? ""
+  const municipio: string | undefined = body.municipio || undefined
   if (!propuesta.trim()) {
     return new Response(JSON.stringify({ tipo: "error", mensaje: "Propuesta vacía" }) + "\n", {
       status: 400,
@@ -148,7 +150,7 @@ export async function POST(req: NextRequest) {
           // 3. Embeber y recuperar fragmentos
           const embResult = await voyage.embed({ input: [enunciado], model: "voyage-4", inputType: "query" })
           const vector = embResult.data?.[0]?.embedding as number[]
-          const citas = await buscarUnidades(vector)
+          const citas = await buscarUnidades(vector, 50, municipio)
 
           // 4. Evaluar dimensión con LLM
           const citasTexto = citas.map((c, i) => `[${c.id}] ${c.texto_normalizado}`).join("\n")

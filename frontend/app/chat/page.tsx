@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown"
 
 export default function ChatPage() {
   const [pregunta, setPregunta] = useState("")
+  const [municipio, setMunicipio] = useState("")
   const [respuesta, setRespuesta] = useState("")
   const [refs, setRefs] = useState<string[]>([])
   const [cargando, setCargando] = useState(false)
@@ -22,7 +23,7 @@ export default function ChatPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pregunta }),
+        body: JSON.stringify({ pregunta, municipio: municipio || undefined }),
       })
       if (!res.body) throw new Error("Sin respuesta")
 
@@ -63,6 +64,32 @@ export default function ChatPage() {
         Haz una pregunta sobre las necesidades de la comunidad en Cartagena. Las respuestas citan
         únicamente fuentes del corpus: actas institucionales, encuesta de percepción y testimonios.
       </p>
+
+      {/* Filtro municipio */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+        {[
+          { valor: "", label: "Todos los territorios" },
+          { valor: "cartagena", label: "Cartagena" },
+          { valor: "puerto_colombia", label: "Puerto Colombia" },
+        ].map(({ valor, label }) => (
+          <button
+            key={valor}
+            onClick={() => setMunicipio(valor)}
+            style={{
+              padding: "6px 14px",
+              fontSize: 13,
+              fontWeight: municipio === valor ? 600 : 400,
+              fontFamily: "inherit",
+              cursor: "pointer",
+              border: "1.5px solid var(--dc-border)",
+              background: municipio === valor ? "var(--dc-ink)" : "transparent",
+              color: municipio === valor ? "#fff" : "var(--dc-ink)",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* Input */}
       <div style={{ marginBottom: 16 }}>

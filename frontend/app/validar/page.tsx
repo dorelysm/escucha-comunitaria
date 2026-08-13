@@ -116,8 +116,15 @@ const COLOR_MARCA_TEXT: Record<Marca, string> = {
   no_respaldada: "var(--dc-grey)",
 }
 
+const MUNICIPIOS = [
+  { valor: "", label: "Todos los territorios" },
+  { valor: "cartagena", label: "Cartagena" },
+  { valor: "puerto_colombia", label: "Puerto Colombia" },
+]
+
 export default function ValidarPage() {
   const [propuesta, setPropuesta] = useState("")
+  const [municipio, setMunicipio] = useState("")
   const [fase, setFase] = useState<"idle" | "procesando" | "listo" | "error">("idle")
   const [dims, setDims] = useState<DimResult[]>([])
   const [errorMsg, setErrorMsg] = useState("")
@@ -145,7 +152,7 @@ export default function ValidarPage() {
       const res = await fetch("/api/validar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ propuesta }),
+        body: JSON.stringify({ propuesta, municipio: municipio || undefined }),
         signal: abortRef.current.signal,
       })
       if (!res.ok || !res.body) throw new Error("Error del servidor")
@@ -199,6 +206,27 @@ export default function ValidarPage() {
       <div style={{ display: "flex", gap: 40, alignItems: "flex-start" }}>
         {/* Panel izquierdo — 2/3 */}
         <div style={{ flex: 2, minWidth: 0 }}>
+          {/* Filtro municipio */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+            {MUNICIPIOS.map(({ valor, label }) => (
+              <button
+                key={valor}
+                onClick={() => setMunicipio(valor)}
+                style={{
+                  padding: "6px 14px",
+                  fontSize: 13,
+                  fontWeight: municipio === valor ? 600 : 400,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                  border: "1.5px solid var(--dc-border)",
+                  background: municipio === valor ? "var(--dc-ink)" : "transparent",
+                  color: municipio === valor ? "#fff" : "var(--dc-ink)",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <textarea
             value={propuesta}
             onChange={(e) => setPropuesta(e.target.value)}
