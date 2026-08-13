@@ -7,6 +7,10 @@ Equipo: Alex (investigación social, pitch) · Dorelys (arquitectura y desarroll
 
 Desplegada en Vercel: **https://escucha-comunitaria.vercel.app/**
 
+## Video explicativo de la propuesta
+
+**[Ver video de explicación →](https://escucha-comunitaria.vercel.app/)**
+
 ## Repositorios del proyecto
 
 Cada uno es un repositorio independiente en GitHub.
