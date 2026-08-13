@@ -1,51 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
-
-export const dynamic = "force-dynamic";
+import { NextRequest, NextResponse } from "next/server"
+import { getSupabaseAnon } from "@/lib/supabase"
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const municipio = searchParams.get("municipio");
-  const departamento = searchParams.get("departamento");
-  const tipo_procedencia = searchParams.get("tipo_procedencia");
+  const { searchParams } = new URL(req.url)
+  const tipo = searchParams.get("tipo")
+  const corpus = searchParams.get("corpus")
+  const municipio = searchParams.get("municipio")
 
-  let query = supabase
+  let q = getSupabaseAnon()
     .from("fuentes")
-    .select("id, titulo, tipo_procedencia, referencia, fecha_recoleccion, hablantes(municipio, departamento)")
-    .order("fecha_recoleccion", { ascending: false });
+    .select(`id, tipo_procedencia, corpus, titulo, referencia, fecha_recoleccion,
+             hablantes(municipio, rango_etario, sexo, localidad, ocupacion, nivel_educativo, estrato)`)
+    .order("id", { ascending: false })
+    .limit(200)
 
-  if (tipo_procedencia) query = query.eq("tipo_procedencia", tipo_procedencia);
+  if (tipo) q = q.eq("tipo_procedencia", tipo)
+  if (corpus) q = q.eq("corpus", corpus)
 
-  const { data, error } = await query;
-  if (error) {
-    return NextResponse.json({ error: { codigo: "ERROR_INTERNO", mensaje: error.message } }, { status: 500 });
+  const { data, error } = await q
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let fuentes: any[] = data ?? []
+
+  if (municipio) {
+    fuentes = fuentes.filter((f) => {
+      const h = Array.isArray(f.hablantes) ? f.hablantes[0] : f.hablantes
+      return h?.municipio?.toLowerCase().includes(municipio.toLowerCase())
+    })
   }
 
-  // Contar unidades por fuente y filtrar por territorio si se pide
-  const fuentes = await Promise.all(
-    (data ?? []).map(async (f) => {
-      const hablante = Array.isArray(f.hablantes) ? f.hablantes[0] : f.hablantes;
-
-      if (municipio && hablante?.municipio?.toLowerCase() !== municipio.toLowerCase()) return null;
-      if (departamento && hablante?.departamento?.toLowerCase() !== departamento.toLowerCase()) return null;
-
-      const { count } = await supabase
-        .from("unidades")
-        .select("id", { count: "exact", head: true })
-        .eq("fuente_id", f.id);
-
-      return {
-        id: f.id,
-        titulo: f.titulo,
-        tipo_procedencia: f.tipo_procedencia,
-        referencia: f.referencia,
-        municipio: hablante?.municipio ?? null,
-        departamento: hablante?.departamento ?? null,
-        fecha_recoleccion: f.fecha_recoleccion,
-        n_unidades: count ?? 0,
-      };
-    })
-  );
-
-  return NextResponse.json({ fuentes: fuentes.filter(Boolean) });
+  return NextResponse.json({ fuentes })
 }

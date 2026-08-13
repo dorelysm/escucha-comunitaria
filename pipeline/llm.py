@@ -28,7 +28,7 @@ _ANTHROPIC_MODEL = os.getenv("ANTHROPIC_FALLBACK_MODEL", "claude-haiku-4-5")
 
 
 def _completar_local(system: str, user: str) -> str:
-    client = OpenAI(base_url=f"{_LOCAL_ENDPOINT}/v1", api_key="lm-studio")
+    client = OpenAI(base_url=f"{_LOCAL_ENDPOINT}/v1", api_key="lm-studio", timeout=5.0, max_retries=1)
     response = client.chat.completions.create(
         model=_LOCAL_MODEL,
         messages=[

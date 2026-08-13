@@ -1,89 +1,101 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import type { EjeCluster } from "@/types/dominio";
-import { ETIQUETA_FUERZA } from "@/lib/fuerza";
+import { useEffect, useState } from "react"
+import { BloquesFuerza } from "@/components/BloquesFuerza"
+import type { FuerzaEvidencia } from "@/types/dominio"
+
+interface Unidad { id: string; texto_literal: string; fuentes: { titulo: string } | null }
+interface Cluster { id: number; etiqueta: string | null; descripcion: string | null; n_unidades: number; unidades: Unidad[] }
+
+function calcularFuerzaCluster(n: number): FuerzaEvidencia {
+  if (n === 0) return "insuficiente"
+  if (n < 3) return "baja"
+  if (n < 8) return "media"
+  return "alta"
+}
 
 export default function ExplorarPage() {
-  const [ejes, setEjes] = useState<EjeCluster[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [muestraInsuficiente, setMuestraInsuficiente] = useState(false);
-  const [abierto, setAbierto] = useState<number | null>(null);
+  const [clusters, setClusters] = useState<Cluster[]>([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState("")
+  const [abiertos, setAbiertos] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     fetch("/api/explorar")
       .then((r) => r.json())
-      .then((d) => {
-        setEjes(d.ejes ?? []);
-        setMuestraInsuficiente(d.muestra_insuficiente ?? false);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+      .then((d) => { setClusters(d.clusters ?? []); setCargando(false) })
+      .catch(() => { setError("Error al cargar los temas."); setCargando(false) })
+  }, [])
 
-  return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-6 py-12">
-        <div className="mb-2">
-          <Link href="/" className="text-slate-400 hover:text-slate-600 text-sm">← Inicio</Link>
-        </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">Explorar el corpus</h1>
-        <p className="text-slate-500 text-sm mb-6">
-          Ejes temáticos que emergen del corpus, ordenados por número de fuentes distintas.
-        </p>
+  const toggle = (id: number) =>
+    setAbiertos((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
 
-        {muestraInsuficiente && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-sm text-amber-800">
-            La muestra actual es insuficiente para leer patrones con confianza. Los resultados son orientativos.
-          </div>
-        )}
+  if (cargando) return <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 32px", fontSize: 15, color: "var(--dc-muted)" }}>Cargando temas…</div>
+  if (error) return <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 32px", fontSize: 15, color: "var(--dc-ochre)" }}>{error}</div>
 
-        {loading && <p className="text-slate-400">Cargando clusters...</p>}
-
-        {!loading && ejes.length === 0 && (
-          <p className="text-slate-500">No hay clusters precomputados todavía. Ingestar corpus y correr <code>analizar.py</code>.</p>
-        )}
-
-        <div className="space-y-3">
-          {ejes.map((eje) => (
-            <div key={eje.cluster_id} className="border border-slate-200 rounded-lg overflow-hidden">
-              <button
-                className="w-full text-left p-4 hover:bg-slate-50 transition-colors"
-                onClick={() => setAbierto(abierto === eje.cluster_id ? null : eje.cluster_id)}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-slate-900">{eje.etiqueta}</p>
-                    <p className="text-sm text-slate-500 mt-1">{eje.descripcion}</p>
-                  </div>
-                  <div className="shrink-0 text-right text-xs text-slate-500">
-                    <div className="font-medium">{eje.evidencia.n_fuentes_distintas} fuentes</div>
-                    <div>{ETIQUETA_FUERZA[eje.evidencia.fuerza]}</div>
-                  </div>
-                </div>
-                {eje.distribucion_territorio.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {eje.distribucion_territorio.map((t) => (
-                      <span key={t.municipio} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                        {t.municipio} ({t.n_unidades})
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </button>
-
-              {abierto === eje.cluster_id && (
-                <div className="border-t border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
-                  <p className="font-medium text-slate-700 mb-2">Corpus dominante: {eje.corpus_dominante}</p>
-                  <p className="text-slate-500 text-xs">
-                    {eje.evidencia.n_unidades} fragmento{eje.evidencia.n_unidades !== 1 ? "s" : ""} · {eje.evidencia.n_fuentes_distintas} fuente{eje.evidencia.n_fuentes_distintas !== 1 ? "s" : ""} distintas
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
+  if (clusters.length === 0) {
+    return (
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 32px" }}>
+        <h1 style={{ fontSize: 38, fontWeight: 700, marginBottom: 32 }}>Explorar temas</h1>
+        <div style={{ border: "2px dashed var(--dc-border)", padding: 48, textAlign: "center", fontSize: 15, color: "var(--dc-muted)" }}>
+          El análisis de temas (BERTopic) aún no se ha ejecutado.<br />
+          Los temas aparecerán aquí después de correr <code style={{ fontFamily: "monospace", fontSize: 13 }}>analizar.py</code>.
         </div>
       </div>
-    </main>
-  );
+    )
+  }
+
+  return (
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 32px" }}>
+      <h1 style={{ fontSize: 38, fontWeight: 700, marginBottom: 8 }}>Explorar temas</h1>
+      <p style={{ fontSize: 16, color: "var(--dc-muted)", marginBottom: 40 }}>
+        Temas emergentes identificados automáticamente en el corpus comunitario.
+      </p>
+      <div>
+        {clusters.map((c, idx) => (
+          <div key={c.id} style={{ borderTop: "1px solid var(--dc-border)" }}>
+            <div
+              onClick={() => toggle(c.id)}
+              style={{ display: "flex", alignItems: "center", gap: 24, padding: "20px 0", cursor: "pointer" }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--dc-border)", minWidth: 28 }}>
+                {String(idx).padStart(2, "0")}
+              </span>
+              <span style={{ fontSize: 32, fontWeight: 600, flex: 1 }}>
+                {c.etiqueta ?? <em style={{ color: "var(--dc-muted)", fontStyle: "italic" }}>Tema sin etiquetar</em>}
+              </span>
+              <BloquesFuerza fuerza={calcularFuerzaCluster(c.n_unidades)} />
+              <span style={{ fontSize: 13, color: "var(--dc-muted)", minWidth: 90, textAlign: "right" }}>
+                {c.n_unidades} fragmentos
+              </span>
+              <span style={{ fontSize: 13, color: "var(--dc-muted)" }}>{abiertos.has(c.id) ? "▲" : "▼"}</span>
+            </div>
+            {abiertos.has(c.id) && (
+              <div style={{ paddingBottom: 24, paddingLeft: 52 }}>
+                {c.descripcion && (
+                  <p style={{ fontSize: 15, color: "var(--dc-muted)", marginBottom: 20 }}>{c.descripcion}</p>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {c.unidades.slice(0, 10).map((u) => (
+                    <blockquote key={u.id} style={{ margin: 0, paddingLeft: 16, borderLeft: "3px solid var(--dc-border)" }}>
+                      <p style={{ fontSize: 15, fontStyle: "italic", margin: 0 }}>"{u.texto_literal}"</p>
+                      {u.fuentes && (
+                        <cite style={{ fontSize: 13, color: "var(--dc-muted)", display: "block", marginTop: 4, fontStyle: "normal" }}>
+                          {u.fuentes.titulo}
+                        </cite>
+                      )}
+                    </blockquote>
+                  ))}
+                  {c.unidades.length > 10 && (
+                    <p style={{ fontSize: 13, color: "var(--dc-muted)" }}>… y {c.unidades.length - 10} fragmentos más.</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        <div style={{ borderTop: "1px solid var(--dc-border)" }} />
+      </div>
+    </div>
+  )
 }

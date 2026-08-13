@@ -1,202 +1,192 @@
-import { NextRequest } from "next/server";
-import { supabase } from "@/lib/supabase";
-import { calcularFuerza, esMuestraInsuficiente } from "@/lib/fuerza";
-import Anthropic from "@anthropic-ai/sdk";
+import { NextRequest } from "next/server"
+import Anthropic from "@anthropic-ai/sdk"
+import { VoyageAIClient } from "voyageai"
+import { getSupabaseAnon } from "@/lib/supabase"
+import { calcularFuerza } from "@/lib/fuerza"
+import type { NombreDimension, Cita, Marca } from "@/types/dominio"
 
-export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const voyage = new VoyageAIClient({ apiKey: process.env.VOYAGE_API_KEY! })
 
-const DIMENSIONES = [
-  { key: "poblacion_objetivo", etiqueta: "Población objetivo" },
-  { key: "tipo_intervencion", etiqueta: "Tipo de intervención" },
-  { key: "duracion_horizonte", etiqueta: "Duración y horizonte" },
-  { key: "resultado_esperado", etiqueta: "Resultado esperado" },
-] as const;
+const MODELO = process.env.ANTHROPIC_FALLBACK_MODEL ?? "claude-haiku-4-5"
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = process.env.ANTHROPIC_FALLBACK_MODEL ?? "claude-haiku-4-5";
-
-async function llm(system: string, user: string): Promise<string> {
-  const resp = await anthropic.messages.create({
-    model: MODEL,
+async function completar(system: string, user: string): Promise<string> {
+  // Intentar LLM local si está configurado
+  const endpoint = process.env.LLM_LOCAL_ENDPOINT?.trim()
+  if (endpoint) {
+    try {
+      const res = await fetch(`${endpoint}/v1/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer lm-studio" },
+        body: JSON.stringify({
+          model: process.env.LLM_LOCAL_MODEL ?? "google/gemma-4-12b-qat",
+          messages: [{ role: "system", content: system }, { role: "user", content: user }],
+          max_tokens: 1024,
+          temperature: 0,
+        }),
+        signal: AbortSignal.timeout(5000),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        return json.choices[0].message.content.trim()
+      }
+    } catch {
+      // fall through to Anthropic
+    }
+  }
+  const msg = await anthropic.messages.create({
+    model: MODELO,
     max_tokens: 1024,
     system,
     messages: [{ role: "user", content: user }],
-  });
-  return (resp.content[0] as { text: string }).text.trim();
+  })
+  return (msg.content[0] as { text: string }).text.trim()
 }
 
-function emit(controller: ReadableStreamDefaultController, data: object) {
-  controller.enqueue(new TextEncoder().encode(JSON.stringify(data) + "\n"));
+function parsearJSON(texto: string) {
+  const texto2 = texto.trim()
+  const m = texto2.match(/```(?:json)?\s*([\s\S]+?)\s*```/)
+  return JSON.parse(m ? m[1] : texto2)
+}
+
+const NORMALIZACION = `Recibes un fragmento sobre necesidades de una persona de la comunidad, que puede venir \
+de un documento institucional o del habla cotidiana de esa persona.
+
+Escribe en una o dos oraciones la necesidad o afirmación de fondo, en registro neutro \
+y descriptivo: sin jerga institucional y sin coloquialismos.
+
+No añadas información ausente. No interpretes causas ni intenciones. \
+Devuelve solo el texto normalizado.`
+
+const DESCOMPOSICION = `Recibes la descripción de un programa de política pública dirigido a la comunidad.
+
+Extrae cuatro dimensiones: población objetivo, tipo de intervención, duración y \
+horizonte de efecto, resultado esperado.
+
+Para cada una, escribe un enunciado breve en registro neutro y descriptivo. Si la propuesta no especifica una dimensión, escribe null.
+
+Devuelve JSON con las claves poblacion_objetivo, tipo_intervencion, duracion_horizonte, resultado_esperado.`
+
+const EVALUACION = `Recibes el enunciado de una dimensión de una propuesta y un conjunto de fragmentos \
+recuperados de testimonios y documentos.
+
+Determina si los fragmentos respaldan la dimensión, no dicen nada al respecto, o \
+apuntan en dirección distinta.
+
+Responde con una de tres marcas: respaldada, no_respaldada, tensionada.
+
+Reglas: no uses conocimiento externo, solo los fragmentos entregados; si los \
+fragmentos tratan un tema distinto aunque suenen parecido, la marca es no_respaldada; \
+declarar un vacío es un resultado válido y preferible a forzar una lectura; en \
+justificacion, una o dos oraciones sin afirmar nada que no esté en los fragmentos.
+
+Devuelve JSON con marca, justificacion e ids_citas (los identificadores de los \
+fragmentos que sostienen la marca).`
+
+async function buscarUnidades(vector: number[], limite = 8): Promise<Cita[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (getSupabaseAnon() as any).rpc("match_unidades", {
+    query_embedding: vector,
+    match_count: limite,
+  })
+
+  if (error || !data) return []
+
+  return (data as Array<{
+    id: string
+    texto_literal: string
+    fuente_id: string
+    referencia: string
+  }>).map((r) => ({
+    id: r.id,
+    texto_literal: r.texto_literal,
+    texto_normalizado: r.texto_literal,
+    fuente_id: r.fuente_id,
+    referencia: r.referencia,
+  }))
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const propuesta: string = body.propuesta ?? "";
-  const territorio: { municipio?: string; departamento?: string } = body.territorio ?? {};
-
+  const body = await req.json()
+  const propuesta: string = body.propuesta ?? ""
   if (!propuesta.trim()) {
-    return new Response(JSON.stringify({ error: { codigo: "PROPUESTA_INVALIDA", mensaje: "La propuesta no puede estar vacía." } }), { status: 400 });
+    return new Response(JSON.stringify({ tipo: "error", mensaje: "Propuesta vacía" }) + "\n", {
+      status: 400,
+      headers: { "Content-Type": "application/x-ndjson" },
+    })
   }
 
+  const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
+      const emit = (obj: object) => {
+        controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"))
+      }
+
       try {
         // 1. Normalizar propuesta
-        emit(controller, { tipo: "estado", fase: "normalizando", detalle: "Normalizando propuesta" });
-        const propuestaNorm = await llm(
-          "Recibes la descripción de un programa de política pública. Reescríbela en registro neutro y descriptivo, sin jerga técnica ni coloquialismos. Devuelve solo el texto normalizado.",
-          propuesta
-        );
+        const normalizada = await completar(NORMALIZACION, propuesta)
 
-        // 2. Descomponer en dimensiones
-        emit(controller, { tipo: "estado", fase: "descomponiendo", detalle: "Identificando dimensiones" });
-        const descomposicionRaw = await llm(
-          `Recibes la descripción de un programa de política pública dirigido a la comunidad.
-Extrae cuatro dimensiones: población objetivo, tipo de intervención, duración y horizonte de efecto, resultado esperado.
-Para cada una, escribe un enunciado breve en registro neutro y descriptivo. Si la propuesta no especifica una dimensión, escribe null.
-Devuelve JSON con las claves poblacion_objetivo, tipo_intervencion, duracion_horizonte, resultado_esperado.`,
-          propuestaNorm
-        );
+        // 2. Descomponer en 4 dimensiones
+        const descomposicion = parsearJSON(await completar(DESCOMPOSICION, normalizada)) as Record<string, string | null>
 
-        let dimensionesEnunciados: Record<string, string | null> = {};
-        try {
-          dimensionesEnunciados = JSON.parse(descomposicionRaw);
-        } catch {
-          dimensionesEnunciados = {};
-        }
+        const orden: NombreDimension[] = [
+          "poblacion_objetivo",
+          "tipo_intervencion",
+          "duracion_horizonte",
+          "resultado_esperado",
+        ]
 
-        // 3. Buscar en corpus (una sola query de unidades, filtrar por territorio en memoria)
-        emit(controller, { tipo: "estado", fase: "buscando", detalle: "Buscando en el corpus" });
-
-        // Embeber propuesta normalizada via Voyage
-        const voyageResp = await fetch("https://api.voyageai.com/v1/embeddings", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.VOYAGE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ input: [propuestaNorm], model: "voyage-4", input_type: "query" }),
-        });
-        const voyageData = await voyageResp.json();
-        const embedding: number[] = voyageData.data?.[0]?.embedding ?? [];
-
-        // Búsqueda vectorial en Supabase (RPC)
-        const matchQuery = supabase.rpc("match_unidades", {
-          query_embedding: embedding,
-          match_count: 20,
-        });
-
-        const { data: matches } = await matchQuery;
-
-        // Filtrar por territorio si se especificó
-        let candidatos = matches ?? [];
-        if (territorio.municipio || territorio.departamento) {
-          const ids = candidatos.map((m: { id: string }) => m.id);
-          if (ids.length > 0) {
-            const { data: conTerritorio } = await supabase
-              .from("unidades")
-              .select("id, fuentes(hablantes(municipio, departamento))")
-              .in("id", ids);
-
-            const idsFiltrados = new Set(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (conTerritorio ?? []).filter((u: any) => {
-                const fuente = Array.isArray(u.fuentes) ? u.fuentes[0] : u.fuentes;
-                const hablante = fuente && (Array.isArray(fuente.hablantes) ? fuente.hablantes[0] : fuente.hablantes);
-                if (territorio.municipio && hablante?.municipio?.toLowerCase() !== territorio.municipio.toLowerCase()) return false;
-                if (territorio.departamento && hablante?.departamento?.toLowerCase() !== territorio.departamento.toLowerCase()) return false;
-                return true;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              }).map((u: any) => u.id)
-            );
-            candidatos = candidatos.filter((m: { id: string }) => idsFiltrados.has(m.id));
-          }
-        }
-
-        const n_fuentes_distintas_total = new Set(candidatos.map((m: { fuente_id: string }) => m.fuente_id)).size;
-
-        // 4. Evaluar cada dimensión
-        for (const dim of DIMENSIONES) {
-          const enunciado = dimensionesEnunciados[dim.key];
-          emit(controller, { tipo: "estado", fase: "evaluando", detalle: `Evaluando: ${dim.etiqueta}` });
+        for (const nombre of orden) {
+          const enunciado = descomposicion[nombre] ?? null
 
           if (!enunciado) {
-            emit(controller, {
-              tipo: "dimension",
-              dimension: dim.key,
-              etiqueta: dim.etiqueta,
-              enunciado: null,
-              marca: "no_respaldada",
-              justificacion: "La propuesta no especifica esta dimensión.",
-              evidencia: { n_unidades: 0, n_fuentes_distintas: 0, fuerza: "aislado" },
-              citas: [],
-              muestra_insuficiente: false,
-            });
-            continue;
+            emit({ tipo: "dimension", nombre, enunciado: null, marca: null, justificacion: null, citas: [], fuerza: "insuficiente" })
+            continue
           }
 
-          // Top-8 para esta dimensión (ya están ordenados por similitud)
-          const top = candidatos.slice(0, 8);
-          const fragmentosTexto = top.map((m: { id: string; texto_literal: string }, i: number) => `[${i}] (id: ${m.id}) ${m.texto_literal}`).join("\n\n");
+          // 3. Embeber y recuperar fragmentos
+          const embResult = await voyage.embed({ input: [enunciado], model: "voyage-4", inputType: "query" })
+          const vector = embResult.data?.[0]?.embedding as number[]
+          const citas = await buscarUnidades(vector)
 
-          const evalRaw = await llm(
-            `Recibes el enunciado de una dimensión de una propuesta y un conjunto de fragmentos recuperados de testimonios y documentos.
-Determina si los fragmentos respaldan la dimensión, no dicen nada al respecto, o apuntan en dirección distinta.
-Responde con una de tres marcas: respaldada, no_respaldada, tensionada.
-Reglas: no uses conocimiento externo, solo los fragmentos entregados; si los fragmentos tratan un tema distinto aunque suenen parecido, la marca es no_respaldada; declarar un vacío es un resultado válido y preferible a forzar una lectura; en justificacion, una o dos oraciones sin afirmar nada que no esté en los fragmentos.
-Devuelve JSON con marca, justificacion e ids_citas (los identificadores de los fragmentos que sostienen la marca, como lista de strings con los ids entre paréntesis).`,
-            `Dimensión: ${enunciado}\n\nFragmentos:\n${fragmentosTexto || "(sin fragmentos recuperados)"}`
-          );
+          // 4. Evaluar dimensión con LLM
+          const citasTexto = citas.map((c, i) => `[${c.id}] ${c.texto_normalizado}`).join("\n")
+          const evaluacionRaw = await completar(
+            EVALUACION,
+            `Dimensión: ${enunciado}\n\nFragmentos:\n${citasTexto || "(sin fragmentos recuperados)"}`
+          )
+          let evaluacion: { marca: Marca; justificacion: string; ids_citas: string[] }
+          try {
+            evaluacion = parsearJSON(evaluacionRaw)
+          } catch {
+            evaluacion = { marca: "no_respaldada", justificacion: evaluacionRaw.slice(0, 200), ids_citas: [] }
+          }
 
-          let evalData: { marca: string; justificacion: string; ids_citas: string[] } = {
-            marca: "no_respaldada",
-            justificacion: "Sin fragmentos suficientes para evaluar.",
-            ids_citas: [],
-          };
-          try { evalData = JSON.parse(evalRaw); } catch { /* fallback */ }
+          const citasRelevantes = citas.filter((c) => (evaluacion.ids_citas ?? []).includes(c.id))
+          const nFuentes = new Set(citasRelevantes.map((c) => c.fuente_id)).size
 
-          const citasIds = new Set(evalData.ids_citas ?? []);
-          const citas = top
-            .filter((m: { id: string }) => citasIds.has(m.id))
-            .map((m: { id: string; texto_literal: string; tipo_procedencia: string; referencia: string; municipio: string; departamento: string; rango_etario: string; situacion_ocupacional: string; similitud: number }) => ({
-              unidad_id: m.id,
-              texto_literal: m.texto_literal,
-              tipo_procedencia: m.tipo_procedencia,
-              referencia: m.referencia ?? null,
-              municipio: m.municipio ?? null,
-              departamento: m.departamento ?? null,
-              rango_etario: m.rango_etario ?? null,
-              situacion_ocupacional: m.situacion_ocupacional ?? null,
-              similitud: m.similitud ?? 0,
-            }));
-
-          const n_fuentes_citas = new Set(citas.map((c: { fuente_id?: string }) => c.fuente_id).filter(Boolean)).size || citas.length;
-          const fuerza = calcularFuerza(n_fuentes_citas);
-
-          emit(controller, {
+          emit({
             tipo: "dimension",
-            dimension: dim.key,
-            etiqueta: dim.etiqueta,
+            nombre,
             enunciado,
-            marca: evalData.marca,
-            justificacion: evalData.justificacion,
-            evidencia: { n_unidades: citas.length, n_fuentes_distintas: n_fuentes_citas, fuerza },
-            citas,
-            muestra_insuficiente: esMuestraInsuficiente(n_fuentes_distintas_total),
-          });
+            marca: evaluacion.marca,
+            justificacion: evaluacion.justificacion,
+            citas: citasRelevantes,
+            fuerza: calcularFuerza(nFuentes),
+          })
         }
 
-        emit(controller, { tipo: "fin", n_dimensiones: DIMENSIONES.length });
+        emit({ tipo: "fin", total_dimensiones: 4 })
       } catch (err) {
-        emit(controller, { tipo: "error", mensaje: String(err) });
+        emit({ tipo: "error", mensaje: err instanceof Error ? err.message : "Error interno" })
       } finally {
-        controller.close();
+        controller.close()
       }
     },
-  });
+  })
 
   return new Response(stream, {
-    headers: { "Content-Type": "application/x-ndjson", "Cache-Control": "no-cache" },
-  });
+    headers: { "Content-Type": "application/x-ndjson", "X-Content-Type-Options": "nosniff" },
+  })
 }

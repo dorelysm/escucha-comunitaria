@@ -66,7 +66,7 @@ def _leer_unidades() -> tuple[list[str], list[list[float]], list[str]]:
     resp = _supabase.table("unidades").select("id, texto_normalizado, embedding").execute()
     ids = [r["id"] for r in resp.data]
     textos = [r["texto_normalizado"] for r in resp.data]
-    vectores = [r["embedding"] for r in resp.data]
+    vectores = [json.loads(r["embedding"]) if isinstance(r["embedding"], str) else r["embedding"] for r in resp.data]
     return ids, textos, vectores
 
 
