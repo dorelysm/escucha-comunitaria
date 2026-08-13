@@ -23,7 +23,7 @@ async function buscarFragmentos(vector: number[]): Promise<Fragmento[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (getSupabaseAnon() as any).rpc("match_unidades", {
     query_embedding: vector,
-    match_count: 20,
+    match_count: 50,
   })
   if (error || !data) return []
   return data as Fragmento[]
