@@ -7,6 +7,12 @@ export async function GET(req: NextRequest) {
   const corpus = searchParams.get("corpus")
   const municipio = searchParams.get("municipio")
 
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  if (!url || !key) {
+    return NextResponse.json({ error: "env_missing", url: !!url, key: !!key }, { status: 500 })
+  }
+
   let q = getSupabaseAnon()
     .from("fuentes")
     .select(`id, tipo_procedencia, corpus, titulo, referencia, fecha_recoleccion, consentimiento`)
@@ -18,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await q
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: error.message, code: error.code }, { status: 500 })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let fuentes: any[] = data ?? []
